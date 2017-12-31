@@ -1,0 +1,166 @@
+<div id="finesDiv" class="container">
+  <p id="resultOfFines"></p>
+  <h2>Fines</h2>
+  <button class="btn btn-primary" type="button" id="refreshButton">Refresh</button>
+  <br/><br/>
+  <div id="resultsDiv" class="row col-sm-9 col-sm-offset-1 col-md-10 col-md-offset-1">
+  <p id="resultRowsCount"><p>
+      <table class="table table-hover paginated">
+          <thead>
+            <tr>
+              <th>Card Number</th>
+              <th>Borrower</th>
+              <th>Paid</th>
+              <th>Fine Amount</th>
+            </tr>
+          </thead>
+          <tbody id="searchResults">
+          </tbody>
+      </table> 
+</div>
+</div>
+<link rel="text/javascript" src="./jquery.tablesorter.js"/> 
+<script>
+  
+    
+
+    $(".table").hide();
+
+    function display(response)
+    { 
+      $("#resultsDiv").show();
+      $(".table").show();
+              console.log("response.length : " + response.length);
+              console.log("response : " + response);
+              var tableBody = $("#searchResults");
+              tableBody.empty();
+              $("#resultsDiv").find("b").remove();
+              $("#resultsDiv").find("div.pager").remove();
+              
+              if(response.length == 0)
+              {
+                var row = $("<tr>");
+                row.append("<td colspan = \"7\">  NO FINES TO DISPLAY </td>");
+                row.append("</tr>");
+                tableBody.append(row);
+              }              
+              else
+              {
+              
+              $("#resultRowsCount").append("<b>Total number of results : " + response.length + "</b>");
+              for(var i=0;i<response.length;i++)
+              {
+                var row = $("<tr>");
+                row.append("<td id=\"Card_no\">" + response[i].Card_no + "</td>");
+                row.append("<td>" + response[i].first_name + " " +response[i].last_name + "</td>");
+                //row.append("<td>" + response[i].Paid + "</td>");
+                if(response[i].Paid)
+                {
+                  row.append("<td> Paid </td>");
+                  row.append("<td><input type=\"text\" class=\"form-control\" size=\"7\" disabled value = \"" + response[i].Amount + "\" /></td>"); 
+                }
+                else
+                {
+                  row.append("<td> Not Paid </td>");
+                  row.append("<td><input type=\"text\" class=\"form-control\" size=\"7\" value=\"" + response[i].Amount + "\"/></td>");
+                  row.append("<button class=\"btn btn-primary\" id=\"payButton\">Pay</button>");
+                }
+                row.append("</tr>");
+                tableBody.append(row);
+              }  
+              }
+
+              //Pagination
+
+              $('table.table.table-hover.paginated').each(function() {
+                var currentPage = 0;
+                var numPerPage = 15;
+                var $table = $(this);
+                $table.bind('repaginate', function() {
+                  $table.find('tbody tr').hide().slice(currentPage * numPerPage, (currentPage + 1) * numPerPage).show();
+                });
+                $table.trigger('repaginate');
+                var numRows = $table.find('tbody tr').length;
+                var numPages = Math.ceil(numRows / numPerPage);
+                var $pager = $('<div class="pager"></div>');
+                for (var page = 0; page < numPages; page++) {
+                  if(page%25 == 0 )
+                  {
+                      ($pager).append("<br/>");
+                  }
+                  $('<span class="page-number"></span>').text(page + 1).bind('click', {
+                  newPage: page
+                  }, function(event) {
+                      currentPage = event.data['newPage'];
+                      $table.trigger('repaginate');
+                      $(this).addClass('active').siblings().removeClass('active');
+                      }).appendTo($pager).addClass('clickable');
+                }
+                $pager.insertBefore($table).find('span.page-number:first').addClass('active');
+                });
+                $(".table").tablesorterPager();
+
+    }
+            
+    $.ajax({
+      type: 'GET',
+      contentType: 'application/json',
+      url: "http://localhost:5678/lib/fines/displayList", 
+      dataType: "json",           
+      success: function(response)
+      {
+        display(response);
+      }
+    });
+
+    $("#refreshButton").click(function()
+    {
+      $.ajax({
+      type: 'GET',
+      contentType: 'application/json',
+      url: "http://localhost:5678/lib/fines/refresh", 
+      dataType: "json",
+      success: function(response) 
+      {
+        display(response);  
+      }
+      });
+    });
+
+    $(document).on("click",("#payButton"),function(){
+      console.log("inside payButton click");
+      var data = {};
+      data.Card_no = $(this).siblings("#Card_no").text();
+      console.log("data : " + data);      
+      var sendData = JSON.stringify(data);
+      console.log("sendData : " + sendData);
+      
+      $.ajax({
+      type: 'POST',
+      data: sendData,
+      contentType: 'application/json',
+      url: "http://localhost:5678/lib/fines/pay", 
+      dataType: "json",
+      success: function(response) 
+      {
+        //display(response);
+        $("#resultsDiv").hide();
+        console.log("response.length : " + response.length);
+        console.log("response.book_returned : " + response.book_returned + "response.fine_paid : " + response.fine_paid);
+        
+        if(response.fine_paid)
+        {
+          $("#resultOfFines").append("<b>Fine Paid successfully by the user</b>"); 
+        }
+        else
+        {
+          if(!response.book_returned)         
+          {
+            $("#resultOfFines").append("<b>All books have not been returned by this user</b>");
+          }
+        }
+      }
+      });
+    });
+          
+</script>

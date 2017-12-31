@@ -1,0 +1,156 @@
+<div id="checkOutDiv" class="container">
+  <p id="resultOfCheckOut"></p>
+  <h2>Check Out Books</h2>
+  <form id="checkOutForm" class="form-horizontal" role="form">
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="isbn">ISBN:</label>
+      <div class="col-sm-10">
+        <input type="text" class="form-control" id="isbn" placeholder="Enter ISBN" required >
+      </div>
+    </div>
+    <!--<div class="form-group">
+      <label class="control-label col-sm-2" for="title">Title:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="title" disabled placeholder="Enter Book Title" >
+      </div>
+    </div>-->
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="branchID">Branch ID:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="Branch_id" placeholder="Enter Branch ID"  required>
+      </div>
+    </div>
+
+    <!--<div class="form-group">
+      <label class="control-label col-sm-2" for="copy">Remaining Copy:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="copy" disabled >
+      </div>
+    </div>-->
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="cardID">Card Number:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="Card_no" placeholder="Enter Card Number" required>
+      </div>
+    </div>
+
+    <div class="form-group">        
+      <div class="col-sm-offset-2 col-sm-10">
+        <button id="submitButton" type="submit" class="btn btn-default">Check OUT</button>
+        <button type="reset" class="btn btn-default">Reset</button>
+        <button id="searchAgainButton" type="button" class="btn btn-default">Search Book Again!</button></a>
+      </div>
+    </div>  
+  </form>
+</div>
+<script>
+  
+  $(document).ready(function()
+  {
+      var ISBN10_0; 
+      var ISBN10_1;
+      var ISBN10_2;
+      var Branch_id_0;
+      var Branch_id_1;
+      var Branch_id_2;
+
+    if(typeof(Storage) !== "undefined") 
+    {
+        // Retreive
+        if(sessionStorage.getItem("ISBN10_0")!=null)
+        var ISBN10_0 = sessionStorage.getItem("ISBN10_0"); 
+        if(sessionStorage.getItem("ISBN10_1")!=null)
+        var ISBN10_1 = sessionStorage.getItem("ISBN10_1");
+        if(sessionStorage.getItem("ISBN10_2")!=null)
+        var ISBN10_2 = sessionStorage.getItem("ISBN10_2");
+        if(sessionStorage.getItem("Branch_id_0")!=null)     
+        var Branch_id_0 = sessionStorage.getItem("Branch_id_0");
+        if(sessionStorage.getItem("Branch_id_1")!=null)
+        var Branch_id_1 = sessionStorage.getItem("Branch_id_1");
+        if(sessionStorage.getItem("Branch_id_2")!=null)
+        var Branch_id_2 = sessionStorage.getItem("Branch_id_2");
+
+        console.log("ISBN10_0 : " + ISBN10_0 + " Branch_id_0 : " + Branch_id_0);
+        console.log("ISBN10_1 : " + ISBN10_1 + " Branch_id_1 : " + Branch_id_1);
+        console.log("ISBN10_2 : " + ISBN10_2 + " Branch_id_2 : " + Branch_id_2);
+        var ISBN = "";
+        if(ISBN10_0!=null)
+          ISBN = ISBN10_0;
+        if(ISBN10_1!=null)
+          ISBN = ISBN + "," + ISBN10_1;
+        if(ISBN10_2!=null)
+          ISBN = ISBN + "," + ISBN10_2;
+        //var ISBN = ISBN10_0 + "," + ISBN10_1 + "," + ISBN10_2;
+        var Branch_id = "";
+        if(Branch_id_0!=null)
+          Branch_id = Branch_id_0;
+        if(Branch_id_1!=null)
+          Branch_id = Branch_id + "," + Branch_id_1;
+        if(Branch_id_2!=null)
+          Branch_id = Branch_id + "," + Branch_id_2;
+        //var Branch_id = Branch_id_0 + "," + Branch_id_1 + "," + Branch_id_2;
+
+        console.log("ISBN : " + ISBN);
+        console.log("Branch_id : " + Branch_id);
+        
+        $("#isbn").val($("#isbn").val()+ISBN);
+        $("#Branch_id").val($("#Branch_id").val()+Branch_id);
+    }
+
+    $("#searchAgainButton").click(function(){
+      $("#containerView").load("./search.html"); 
+    });
+  
+    $("#checkOutForm").submit(function(){
+
+      $("#checkOutDiv").find("p").empty();
+      var data = {};
+      data.isbn = $("#isbn").val();
+      data.branch_id = $("#Branch_id").val();
+      data.card_no = $("#Card_no").val();
+    
+      var sendData = JSON.stringify(data);
+      console.log("sendData : " + sendData);
+
+      $.ajax({
+      type: 'POST',
+      data: sendData,
+      contentType: 'application/json',
+      url: "http://localhost:5678/lib/checkOut/", 
+      dataType: "json",           
+      success: function(response) {
+        
+        //var exists = response.exists;
+        var limit_reached = response.limit_reached;
+        var book_not_available = response.book_not_available;
+        var success = response.success;
+        var remaining_copy = response.remaining_copy;
+        //$("#borrowerDiv").find("p").empty();
+        if(limit_reached)
+        {
+          $("#resultOfCheckOut").append("<b>User with card number " + response.card_no + " already has 3 books checked out</b>");
+        }
+        /*if(exists)
+        {
+          $("#resultOfCheckOut").append("<b>User with card number " + response.card_no + " does not exist</b>"); 
+        }*/
+        if(book_not_available)
+        {
+          $("#resultOfCheckOut").append("<b>Selected book is not available at selected branch</b>");
+        }
+        if(success)
+        {
+          $("#resultOfCheckOut").append("<b>Check out successful</b>");
+          //$("#resultOfCheckOut").append("<br/><b>Remaining Copies of given book :" + remaining_copy + "</b>")
+        }
+      
+      }
+    });
+
+  });
+
+  });
+
+</script>

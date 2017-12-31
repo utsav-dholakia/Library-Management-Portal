@@ -1,0 +1,193 @@
+<div id="checkInDiv" class="container">
+  <p id="resultOfCheckIn"></p>
+  <h2>Checkin Book</h2>
+  <form id="checkInForm" class="form-inline" role="form">
+      <div class="form-group">
+      <label for="condition">Select an option:</label>
+      <select id="condition" class="form-control">
+        <option value="exact" selected>Exactly</option>
+        <option value="contains">Contains</option>
+        <option value="start">Starts With</option>
+      </select>
+      </div>
+      <div class="form-group" id="adv-search">
+        <input type="text" id="searchISBN" class="form-control pad" maxlength="10" placeholder="Search ISBN" />
+        <input type="text" id="searchCardNo" class="form-control pad" placeholder="Search Card Number" />
+        <input type="text" id="searchBorrower" class="form-control pad" placeholder="Search Borrower Name" />
+      </div>
+      <button id="searchButton" type="submit" class="btn btn-primary">Search</button>
+      <button id="checkInButton" type="button" class="btn btn-primary">Check In Books</button>
+  </form>
+
+
+<div id="resultsDiv" class="row col-sm-9 col-sm-offset-1 col-md-10 col-md-offset-1">
+      <p id="resultRowsCount"><p>
+      <table class="table table-hover paginated">
+          <thead>
+            <tr>
+              <th>ISBN</th>
+              <th>Card Number</th>
+              <th>Borrower</th>
+              <th>Branch Id</th>
+              <th>Due Date</th>
+              <th>CheckIn</th>
+            </tr>
+          </thead>
+          <tbody id="searchResults">
+          </tbody>
+      </table> 
+      
+      <script>
+
+        $(".table").hide();
+        var incomingData = {};
+        $("#checkInButton").prop("disabled",true);
+        $("#checkInForm").submit(function(){
+          var valid=0;
+
+          $(this).find('input[type=text]').each(function(){
+            if($(this).val() != "") valid+=1;
+          });
+          if(!valid){
+            alert("Input at least one search text");
+          }
+          else
+          {
+            console.log("In else part");
+            
+            var searchParam = {};
+            searchParam.Borrower = $("#searchBorrower").val();
+            searchParam.CardNo = $("#searchCardNo").val();
+            searchParam.ISBN = $("#searchISBN").val();
+            searchParam.condition = $("#condition").val();
+
+            if($('#radioContains').is(':checked'))
+              searchParam.condition = "contains";
+            else if($('#radioExact').is(':checked'))
+              searchParam.condition = "exact";
+            else if($('#radioStarts').is(':checked'))
+              searchParam.condition = "starts";
+
+            var sendData = JSON.stringify(searchParam);
+            console.log("sendData : " + sendData);
+
+            $.ajax({
+            type: 'POST',
+            data: sendData,
+            contentType: 'application/json',
+            url: "http://localhost:5678/lib/checkIn/search", 
+            dataType: "json",           
+            success: function(response) {
+              $(".table").show();
+              incomingData = response;
+              console.log("response.length : " + response.length);
+              console.log("response : " + response);
+              var tableBody = $("#searchResults");
+              tableBody.empty();
+              $("#resultsDiv").find("b").remove();
+              $("#resultsDiv").find("div.pager").remove();
+              
+              if(response.length == 0)
+              {
+                $("#checkInButton").prop("disabled",true);
+                var row = $("<tr>");
+                row.append("<td colspan = \"7\">  NO DATA MATCHES </td>");
+                row.append("</tr>");
+                tableBody.append(row);
+              }              
+              else
+              {
+              $("#checkInButton").prop("disabled",false);
+              $("#resultRowsCount").append("<b>Total number of results : " + response.length + "</b>");
+              for(var i=0;i<response.length;i++)
+              {
+                var row = $("<tr>");
+                row.append("<td>" + response[i].Isbn + "</td>");
+                row.append("<td>" + response[i].Card_no + "</td>");
+                row.append("<td>" + response[i].first_name + " " +response[i].last_name + "</td>");
+                row.append("<td>" + response[i].Branch_id + "</td>");
+                row.append("<td>" + response[i].Due_date + "</td>");
+                row.append("<td> <input class=\"checkInSelection\" type=\"checkbox\" value=\""+ response[i].Loan_id + "\"/></td>");
+                row.append("</tr>");
+                tableBody.append(row);
+              }  
+              }
+
+              //Pagination
+
+              $('table.table.table-hover.paginated').each(function() {
+                var currentPage = 0;
+                var numPerPage = 15;
+                var $table = $(this);
+                $table.bind('repaginate', function() {
+                  $table.find('tbody tr').hide().slice(currentPage * numPerPage, (currentPage + 1) * numPerPage).show();
+                });
+                $table.trigger('repaginate');
+                var numRows = $table.find('tbody tr').length;
+                var numPages = Math.ceil(numRows / numPerPage);
+                var $pager = $('<div class="pager"></div>');
+                for (var page = 0; page < numPages; page++) {
+                  if(page%25 == 0 )
+                  {
+                      ($pager).append("<br/>");
+                  }
+                  $('<span class="page-number"></span>').text(page + 1).bind('click', {
+                  newPage: page
+                  }, function(event) {
+                      currentPage = event.data['newPage'];
+                      $table.trigger('repaginate');
+                      $(this).addClass('active').siblings().removeClass('active');
+                      }).appendTo($pager).addClass('clickable');
+                }
+                $pager.insertBefore($table).find('span.page-number:first').addClass('active');
+                });
+                
+                
+              }
+            });
+          }
+        });
+        $("#checkInButton").click(function(){
+          
+          var checkboxCount = $("input:checkbox:checked").length;
+          console.log("checkboxCount : " + checkboxCount);      
+          checkboxCount = $("input:checkbox:checked").length;
+          var data = [];
+          if(checkboxCount<1)
+          {
+            alert("Select at least 1 book");
+          }
+          else{
+          $("input:checkbox:checked").each(function() { //loop through all selected checkboxes and store values
+            var value=$(this).attr("value");
+            var Loan_id = value;
+            console.log("checkbox value:" + Loan_id);
+            data[data.length] = Loan_id;
+            //console.log("ISBN : " + ISBN + " CardNo : " + CardNo);
+          });
+          
+          var sendData = JSON.stringify(data);
+          console.log("sendData : " + sendData);
+          $.ajax({
+            type: 'POST',
+            data: sendData,
+            contentType: 'application/json',
+            url: "http://localhost:5678/lib/checkIn/checkIn", 
+            dataType: "json",           
+            success: function(response) {
+              if(response.success)
+              {
+                $("#resultOfCheckIn").append("<b>CheckIn successful</b>");
+              }
+              else
+              {
+                $("#resultOfCheckIn").append("<b>CheckIn failed</b>"); 
+              }
+            }
+          });
+          }
+        });
+        
+      </script>
+  </div>
+</div>

@@ -1,0 +1,211 @@
+
+<div id="searchDiv" class="container-fluid">
+  
+  <div class="row">	   
+    <div class="col-md-offset-2">
+    
+    <form id="searchForm" class="form-inline">
+      <div class="form-group">
+      <label for="condition">Select an option:</label>
+      <select id="condition" class="form-control">
+        <option value="exact" selected>Exactly</option>
+        <option value="contains">Contains</option>
+        <option value="start">Starts With</option>
+      </select>
+      </div>
+      <div class="form-group" id="adv-search">
+        <input type="text" id="searchISBN" class="form-control pad" maxlength="10" placeholder="Search for ISBN" />
+        <input type="text" id="searchBook" class="form-control pad" placeholder="Search for Book" />
+        <input type="text" id="searchAuthor" class="form-control pad" placeholder="Search for Author" />
+      </div>
+      <button id="searchButton" type="submit" class="btn btn-primary">Search</button>
+      <button id="checkOutButton" type="button" class="btn btn-primary">Check Out Books</button>
+    </form>	
+    
+    </div>
+  </div>
+
+  <div id="resultsDiv" class="row col-sm-9 col-sm-offset-1 col-md-10 col-md-offset-1">
+ 	    <p id="resultRowsCount"><p>
+      <table class="table table-hover paginated">
+          <thead>
+            <tr>
+              <th>ISBN</th>
+              <th>Book Title</th>
+              <th>Author</th>
+              <th>Branch ID</th>
+              <th>Branch Name</th>
+              <th>Total Copies</th>
+              <th>Remaining Copies</th>
+              <th>Checkout</th>
+            </tr>
+          </thead>
+          <tbody id="searchResults">
+          </tbody>
+      </table> 
+      
+      <script>
+
+        $(".table").hide();
+        $("#checkOutButton").prop("disabled",true);
+        
+        $("#searchForm").submit(function(){
+          var valid=0;
+
+          $(this).find('input[type=text]').each(function(){
+            if($(this).val() != "") valid+=1;
+          });
+          if(!valid){
+            alert("Input at least one search text");
+          }
+          else
+          {
+            console.log("In else part");
+            
+            var searchParam = {};
+            searchParam.Title = $("#searchBook").val();
+            searchParam.Author = $("#searchAuthor").val();
+            searchParam.ISBN = $("#searchISBN").val();
+            searchParam.condition = $("#condition").val();
+
+            if($('#radioContains').is(':checked'))
+              searchParam.condition = "contains";
+            else if($('#radioExact').is(':checked'))
+              searchParam.condition = "exact";
+            else if($('#radioStarts').is(':checked'))
+              searchParam.condition = "starts";
+
+            var sendData = JSON.stringify(searchParam);
+            console.log("sendData : " + sendData);
+
+            $.ajax({
+            type: 'POST',
+            data: sendData,
+            contentType: 'application/json',
+            url: "http://localhost:5678/lib/search/", 
+            dataType: "json",           
+            success: function(response) {
+              $(".table").show();
+              console.log("response.length : " + response.length);
+              console.log("response : " + response);
+              var tableBody = $("#searchResults");
+              tableBody.empty();
+              $("#resultsDiv").find("b").remove();
+              $("#resultsDiv").find("div.pager").remove();
+              
+              if(response.length == 0)
+              {
+                $("#checkOutButton").prop("disabled",true);
+                var row = $("<tr>");
+                row.append("<td colspan = \"7\">  NO DATA MATCHES </td>");
+                row.append("</tr>");
+                tableBody.append(row);
+              }              
+              else
+              {
+              $("#checkOutButton").prop("disabled",false);
+              $("#resultRowsCount").append("<b>Total number of results : " + response.length + "</b>");
+              for(var i=0;i<response.length;i++)
+              {
+                var row = $("<tr>");
+                row.append("<td>" + response[i].ISBN10 + "</td>");
+                row.append("<td>" + response[i].Title + "</td>");
+                row.append("<td>" + response[i].Author_name + "</td>");
+                row.append("<td>" + response[i].Branch_id + "</td>");
+                row.append("<td>" + response[i].Branch_name + "</td>");
+                row.append("<td>" + response[i].no_of_copies + "</td>");
+                row.append("<td>" + response[i].remaining_copy + "</td>");
+                //row.append("<td> <input class=\"checkOutSelection\" type=\"checkbox\" value=\""+ response[i].ISBN10+"_"+response[i].Branch_id + "\"/></td>");
+                //$(this).find("td.checkOutSelection").attr("disabled",true);
+                if(response[i].remaining_copy > 0)
+                {
+                  row.append("<td> <input class=\"checkOutSelection\" name=\"radioForCheckOut\" type=\"radio\" value=\""+ response[i].ISBN10+"_"+response[i].Branch_id + "\"/></td>");
+                  //$(this).find("td.checkOutSelection").attr("disabled",true);
+                  //console.log("disable checkBox for :" + response[i].ISBN10+"_"+response[i].Branch_id);
+                }
+                row.append("</tr>");
+                tableBody.append(row);
+              }  
+              }
+
+              //Pagination
+
+              $('table.table.table-hover.paginated').each(function() {
+                var currentPage = 0;
+                var numPerPage = 15;
+                var $table = $(this);
+                $table.bind('repaginate', function() {
+                  $table.find('tbody tr').hide().slice(currentPage * numPerPage, (currentPage + 1) * numPerPage).show();
+                });
+                $table.trigger('repaginate');
+                var numRows = $table.find('tbody tr').length;
+                var numPages = Math.ceil(numRows / numPerPage);
+                var $pager = $('<div class="pager"></div>');
+                for (var page = 0; page < numPages; page++) {
+                  if(page%25 == 0 )
+                  {
+                      ($pager).append("<br/>");
+                  }
+                  $('<span class="page-number"></span>').text(page + 1).bind('click', {
+                  newPage: page
+                  }, function(event) {
+                      currentPage = event.data['newPage'];
+                      $table.trigger('repaginate');
+                      $(this).addClass('active').siblings().removeClass('active');
+                      }).appendTo($pager).addClass('clickable');
+                }
+                $pager.insertBefore($table).find('span.page-number:first').addClass('active');
+                });
+
+              }
+            });
+          }
+        });
+
+        var checkboxCount = $("input:radio:checked").length;
+        console.log("checkboxCount : " + checkboxCount);
+        
+        $("#checkOutButton").click(function(){
+            checkboxCount = $("input:radio:checked").length;
+            if(checkboxCount >0 && checkboxCount<=1)
+            {
+              if (typeof(Storage) !== "undefined") 
+              {
+                // Store
+                window.sessionStorage.clear();
+                var index = 0;
+                $("input:radio:checked").each(function() { //loop through all selected checkboxes and store values
+                  var value=$(this).attr("value");
+                  var ISBN10 = value.substring(0,10);
+                  var Branch_id = value.substring(11);
+                  console.log("radio value:" + value);
+                  console.log("ISBN10 : " + ISBN10 + " Branch_id : " + Branch_id);
+                  sessionStorage.setItem("ISBN10_"+index,ISBN10);
+                  sessionStorage.setItem("Branch_id_"+index,Branch_id);
+                  index++;
+                });
+              } 
+              else 
+              {
+                alert("Sorry, your browser does not support Web Storage...");
+              }
+              $("#containerView").load("./checkOut.html"); 
+            }
+            else
+            {
+              if(checkboxCount>1)
+              {
+                alert("Select only one book at a time");
+              }
+              if(checkboxCount<1)
+              {
+                alert("Select at least 1 book");
+              }
+            }
+        });
+        
+      </script>
+ 	</div>
+</div>
+
+           

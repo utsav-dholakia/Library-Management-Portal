@@ -1,0 +1,174 @@
+<div id="borrowerDiv" class="container">
+  <p id="resultOfRegistration"></p>
+  <h2>Borrower Registration</h2>
+  <form id="borrowerRegisterForm" class="form-horizontal" role="form">
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="ssn">SSN:</label>
+      <div class="col-sm-10">
+        <input type="text" class="form-control" maxlength="11" id="ssn" placeholder="Enter ssn" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="fname">First Name:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="fname" maxlength="25" placeholder="Enter First Name" required>
+      </div>
+    </div>
+
+      <div class="form-group">
+      <label class="control-label col-sm-2" for="fname">Last Name:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="lname" maxlength="20" placeholder="Enter Last Name" required>
+      </div>
+    </div>
+
+      <div class="form-group">
+      <label class="control-label col-sm-2" for="address">Address:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="address" maxlength="40" maxlength="10" placeholder="Enter Address" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="City">City:</label>
+      <div class="col-sm-10">          
+        <input type="text" class="form-control" id="city" maxlength="10" placeholder="Enter City" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="state">State:</label>
+      <div class="col-sm-10">          
+      <select class="form-control" id="state">
+            <option value="AL">Alabama</option>
+            <option value="AK">Alaska</option>
+            <option value="AZ">Arizona</option>
+            <option value="AR">Arkansas</option>
+            <option value="CA">California</option>
+            <option value="CO">Colorado</option>
+            <option value="CT">Connecticut</option>
+            <option value="DE">Delaware</option>
+            <option value="DC">District Of Columbia</option>
+            <option value="FL">Florida</option>
+            <option value="GA">Georgia</option>
+            <option value="HI">Hawaii</option>
+            <option value="ID">Idaho</option>
+            <option value="IL">Illinois</option>
+            <option value="IN">Indiana</option>
+            <option value="IA">Iowa</option>
+            <option value="KS">Kansas</option>
+            <option value="KY">Kentucky</option>
+            <option value="LA">Louisiana</option>
+            <option value="ME">Maine</option>
+            <option value="MD">Maryland</option>
+            <option value="MA">Massachusetts</option>
+            <option value="MI">Michigan</option>
+            <option value="MN">Minnesota</option>
+            <option value="MS">Mississippi</option>
+            <option value="MO">Missouri</option>
+            <option value="MT">Montana</option>
+            <option value="NE">Nebraska</option>
+            <option value="NV">Nevada</option>
+            <option value="NH">New Hampshire</option>
+            <option value="NJ">New Jersey</option>
+            <option value="NM">New Mexico</option>
+            <option value="NY">New York</option>
+            <option value="NC">North Carolina</option>
+            <option value="ND">North Dakota</option>
+            <option value="OH">Ohio</option>
+            <option value="OK">Oklahoma</option>
+            <option value="OR">Oregon</option>
+            <option value="PA">Pennsylvania</option>
+            <option value="RI">Rhode Island</option>
+            <option value="SC">South Carolina</option>
+            <option value="SD">South Dakota</option>
+            <option value="TN">Tennessee</option>
+            <option value="TX" selected>Texas</option>
+            <option value="UT">Utah</option>
+            <option value="VT">Vermont</option>
+            <option value="VA">Virginia</option>
+            <option value="WA">Washington</option>
+            <option value="WV">West Virginia</option>
+            <option value="WI">Wisconsin</option>
+            <option value="WY">Wyoming</option>
+      </select>
+      </div>
+    </div>
+
+      <div class="form-group">
+      <label class="control-label col-sm-2" for="pno">Phone Number:</label>
+      <div class="col-sm-10">          
+        <input type="tel" class="form-control" maxlength="10" id="phoneno" placeholder="Enter Phone Number" required>
+      </div>
+    </div>
+
+      <div class="form-group">
+      <label class="control-label col-sm-2" for="email">email:</label>
+      <div class="col-sm-10">          
+        <input type="email" class="form-control" id="email" maxlength="34" placeholder="Enter Email" required>
+      </div>
+    </div>
+ 
+    <div class="form-group">        
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-default">Submit</button>
+        <button type="reset" class="btn btn-default">Reset</button>
+      </div>
+
+    </div> 
+  </form>
+</div>
+
+<script>
+  function validateSSN(ssn)
+  {
+    var regex = /^\d{3}-?\d{2}-?\d{4}$|^XXX-XX-XXXX$/;
+    return regex.test(ssn);
+  }
+  $("#borrowerRegisterForm").submit(function()
+  { 
+
+    $("#borrowerDiv").find("p").empty();
+    var data = {};
+    data.ssn = $("#ssn").val();
+    if(!validateSSN(data.ssn))
+    {
+        alert("SSN not valid, enter in the form of XXX-XX-XXXX");
+        return 0;
+    }
+    data.first_name = $("#fname").val();
+    data.last_name = $("#lname").val();
+    data.email = $("#email").val();
+    data.address = $("#address").val();
+    data.city = $("#city").val();
+    data.state = $("#state").val();
+    data.phone = $("#phoneno").val();
+
+    var sendData = JSON.stringify(data);
+    console.log("sendData : " + sendData);
+
+    $.ajax({
+      type: 'POST',
+      data: sendData,
+      contentType: 'application/json',
+      url: "http://localhost:5678/lib/register/", 
+      dataType: "json",           
+      success: function(response) {
+        
+        var exists = response.exists;
+        //$("#borrowerDiv").find("p").empty();
+        if(exists)
+        {
+          $("#resultOfRegistration").append("<b>SSN number already exists</b>");
+        }
+        else
+        {
+          $("#resultOfRegistration").append("<b>User with card number " + response.card_no + " added</b>"); 
+        }
+          
+      }
+    });
+
+  });
+
+</script>

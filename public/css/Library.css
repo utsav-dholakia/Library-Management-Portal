@@ -1,0 +1,91 @@
+.inline{
+    display:inline;
+}
+.navbar {
+    line-height: 100%;
+}
+div.pager {
+    text-align: center;
+    margin: 1em 0;
+}
+
+div.pager span {
+    display: inline-block;
+    width: 1.8em;
+    height: 1.8em;
+    line-height: 1.8;
+    text-align: center;
+    cursor: pointer;
+    background: gray;
+    color: #fff;
+    margin-right: 0.5em;
+}
+
+div.pager span.active {
+    background: #c00;
+}
+/*
+.view{
+    background-color: #EDEDA0;
+    float: left;
+    position:absolute;
+    left:0;
+    width:70%;
+    margin-top:48px; 
+
+    height:450px;
+
+}
+aside{
+background-color: #CdCdA0;
+position:absolute;
+right:0;
+width:30%;
+margin-top:48px; 
+
+height:450px;
+}*/
+/* Add a gray color to all navbar links
+
+.navbar li a, .navbar .navbar-brand { 
+    color: #d5d5d5 !important;
+}
+*/
+/* On hover, the links will turn white 
+.navbar-nav li a:hover {
+    color: #fff !important;
+}
+*/
+/* The active link 
+.navbar-nav li.active a {
+    color: #fff !important;
+    background-color:#29292c !important;
+}
+*/
+
+/* Remove border color from the collapsible button
+.navbar-default .navbar-toggle {
+    border-color: transparent;
+}
+*/
+/*
+.img{
+    padding:5px;
+}
+.title{
+    float:right;
+    font: bold  arial, sans-serif;
+    padding-right: 500px;
+}
+footer {
+    background-color: #2d2d30;
+    color: #f5f5f5;
+    padding: 10px;
+    vertical-align: bottom;
+    margin-top: 2500px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+*/
